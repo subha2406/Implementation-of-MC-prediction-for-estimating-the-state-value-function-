@@ -56,15 +56,105 @@ Monte Carlo methods calculate the average return obtained after visiting a state
 
 ## Program
 
-```python
+```
+import numpy as np
+import matplotlib.pyplot as plt
+from collections import defaultdict
+import gym
+
+env = gym.make("FrozenLake-v1", is_slippery=False)
+
+gamma = 0.9
+episodes = 5000
+
+V = defaultdict(float)
+
+returns = defaultdict(list)
+
+def policy(state):
+    return env.action_space.sample()
+
+def generate_episode():
+    episode = []
+
+    state, _ = env.reset()
+    done = False
+
+    while not done:
+        action = policy(state)
+
+        next_state, reward, terminated, truncated, _ = env.step(action)
+        done = terminated or truncated
+
+        episode.append((state, action, reward))
+
+        state = next_state
+
+    return episode
+
+for ep in range(episodes):
+
+    episode = generate_episode()
+
+    G = 0
+    visited_states = set()
+
+    for t in reversed(range(len(episode))):
+
+        state, action, reward = episode[t]
+
+        G = gamma * G + reward
+
+        # First-visit MC
+        if state not in visited_states:
+
+            returns[state].append(G)
+
+            V[state] = np.mean(returns[state])
+
+            visited_states.add(state)
+
+print("State Value Function:\n")
+
+for s in range(env.observation_space.n):
+    print(f"State {s}: {V[s]:.3f}")
+
+value_grid = np.zeros((4,4))
+
+for state in range(16):
+    row = state // 4
+    col = state % 4
+
+    value_grid[row, col] = V[state]
+
+plt.figure(figsize=(6,6))
+
+plt.imshow(value_grid)
+
+for i in range(4):
+    for j in range(4):
+        plt.text(j, i,
+                 round(value_grid[i,j],2),
+                 ha='center',
+                 va='center',
+                 color='white',
+                 fontsize=12)
+
+plt.title("State Value Function Estimate")
+plt.colorbar()
+plt.show()
 ```
 ## Output
 
-```text
 
-```
+<img width="328" height="389" alt="image" src="https://github.com/user-attachments/assets/195ec52a-8762-4520-9f48-69b20d4160b4" />
+
+
+
 
 ### Output Graph
+
+<img width="724" height="612" alt="image" src="https://github.com/user-attachments/assets/8f1714a2-d0a8-4d51-a02c-22370a235e19" />
 
 The following heatmap is generated for the estimated state-value function:
 
